@@ -4,6 +4,7 @@ const Axios = require("axios");
 const generatePassword = require("../../util/generatePassword.js");
 const sendMail = require('../../util/sendEmail.js');
 const Config = require('../../../config.json');
+const db = require('../../database.js');
 
 
 exports.description = "Resets the password for the linked console account.";
@@ -21,7 +22,7 @@ exports.run = async (client, message, args) => {
     const password = await generatePassword();
 
     //Gets the user's data.
-    const userAccount = await userData.get(message.author.id);
+    const userAccount = await db.getUserData(message.author.id);
 
     if (userAccount == null) {
         message.reply("You do not have a console account linked with your discord account.");

@@ -2,6 +2,7 @@ const Discord = require("discord.js");
 const parser = new Intl.NumberFormat();
 
 const Config = require('../../../config.json');
+const db = require('../../database.js');
 
 exports.description = "Shows the number of premium servers you have, and how many you have used.";
 
@@ -19,18 +20,9 @@ exports.run = async (client, message, args) => {
             ? args[1].match(/[0-9]{17,19}/)[0]
             : message.author.id;
 
-    //Gets the user's premium data.
-    let userPremium = await userPrem.get(userId);
-
-    //If the user has no premium data, set it to an empty object.
-    if (userPremium == null) {
-        await userPrem.set(userId, {
-            used: 0,
-            donated: 0
-        });
-
-        return await message.reply("Retry the command.");
-    };
+    //Gets the user's premium data (ensures row exists first).
+    await db.ensureUserPrem(userId);
+    let userPremium = await db.getUserPrem(userId);
 
     //Takes amount donated and divides by the price of a premium server to determine max count.
     const maxAmount = Math.floor((userPremium.donated || 0) / Config.PremiumServerPrice);

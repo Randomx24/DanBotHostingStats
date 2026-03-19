@@ -3,6 +3,7 @@ const ping = require('ping-tcp-js');
 const Discord = require('discord.js');
 const Config = require('../config.json');
 const Status = require('../config/status-configs.js');
+const db = require('./database.js');
 
 const safePromise = async (promise) => {
     try {
@@ -26,22 +27,14 @@ const startNodeChecker = () => {
                     const [, pingError] = await safePromise(ping.ping({ host: data.IP, port: 22 }));
 
                     if (pingError) {
-
-                        await nodeStatus.set(`${node}.timestamp`, Date.now());
-                        await nodeStatus.set(`${node}.status`, false);
-                        await nodeStatus.set(`${node}.is_vm_online`, false);
-
+                        await db.setNodeStatusFields(node, { timestamp: Date.now(), status: false, is_vm_online: false });
                         continue;
                     }
 
-                    await nodeStatus.set(`${node}.timestamp`, Date.now());
-                    await nodeStatus.set(`${node}.status`, false);
-                    await nodeStatus.set(`${node}.is_vm_online`, true);
+                    await db.setNodeStatusFields(node, { timestamp: Date.now(), status: false, is_vm_online: true });
 
                 } else {
-                    await nodeStatus.set(`${node}.timestamp`, Date.now());
-                    await nodeStatus.set(`${node}.status`, true);
-                    await nodeStatus.set(`${node}.is_vm_online`, true);
+                    await db.setNodeStatusFields(node, { timestamp: Date.now(), status: true, is_vm_online: true });
                 }
 
                 const [serverCountRes, serverCountError] = await safePromise(axios({
@@ -60,7 +53,7 @@ const startNodeChecker = () => {
 
                 const serverCount = serverCountRes.data.data.filter(m => m.attributes.assigned).length;
 
-                await nodeServers.set(`${node}`, {
+                await db.setNodeServers(node, {
                     servers: serverCount,
                     maxCount: data.MaxLimit
                 });
@@ -73,14 +66,11 @@ const startNodeChecker = () => {
                     const [, error] = await safePromise(ping.ping({ host: data.IP, port: 22}));
 
                     if (error) {
-                        await nodeStatus.set(`${name}.timestamp`, Date.now());
-                        await nodeStatus.set(`${name}.status`, false);
-
+                        await db.setNodeStatusFields(name, { timestamp: Date.now(), status: false });
                         continue;
                     }
 
-                    await nodeStatus.set(`${name}.timestamp`, Date.now());
-                    await nodeStatus.set(`${name}.status`, true);
+                    await db.setNodeStatusFields(name, { timestamp: Date.now(), status: true });
                 }
             }
         }
@@ -95,8 +85,10 @@ const parseStatus = async () => {
         const temp = [];
         for (const [nodeKey, data] of Object.entries(nodes)) {
 
-            const nodeStatusData = await nodeStatus.get(nodeKey.toLowerCase());
-            const nodeServerData = await nodeServers.get(nodeKey.toLowerCase());
+            const [nodeStatusData, nodeServerData] = await Promise.all([
+                db.getNodeStatus(nodeKey.toLowerCase()),
+                db.getNodeServers(nodeKey.toLowerCase()),
+            ]);
 
             const serverUsage = await nodeServerData
                 ? `(${nodeServerData.servers} / ${nodeServerData.maxCount})`
@@ -125,7 +117,7 @@ const parseStatus = async () => {
             const temp = [];
             for (const [name, data] of Object.entries(services)) {
 
-                const serviceStatusData = await nodeStatus.get(name.toLowerCase());
+                const serviceStatusData = await db.getNodeStatus(name.toLowerCase());
 
                 const statusText = serviceStatusData?.status ? "🟢 Online" : "🔴 **Offline**";
 

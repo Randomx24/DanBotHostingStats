@@ -1,4 +1,5 @@
 const Discord = require("discord.js");
+const db = require("../../database.js");
 
 /**
  * 
@@ -10,7 +11,7 @@ const Discord = require("discord.js");
  */
 exports.run = async (client, message) => {
     // Request user data.
-    const data = await userData.get(message.author.id);
+    const data = await db.getUserData(message.author.id);
 
     // Check if the user has an account.
     if (!data) return await message.reply("You do not have an account.");

@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const Config = require('../../../config.json');
 const MiscConfigs = require("../../../config/misc-configs.js");
 const Creation = require("../../../createData.js");
+const db = require('../../database.js');
 
 
 exports.description = "Create a free server. View this command for usage.";
@@ -19,7 +20,7 @@ exports.run = async (client, message, args) => {
     // Removes all the other arguments, and joins the strings, then limits it to 150 characters.
     const ServerName = message.content.split(" ").slice(3).join(" ").slice(0, 150) + (message.content.split(" ").slice(3).join(" ").length > 150 ? "..." : "") || "Untitled Server (settings -> server name)";
 
-    const userAccount = await userData.get(message.author.id);
+    const userAccount = await db.getUserData(message.author.id);
 
     if (userAccount == null) {
         return message.reply(

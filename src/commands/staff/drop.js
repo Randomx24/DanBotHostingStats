@@ -4,7 +4,8 @@ const humanizeDuration = require("humanize-duration");
 const Config = require('../../../config.json');
 const MiscConfigs = require('../../../config/misc-configs.js');
 
-const generatePassword = require('../../util/generatePassword.js')
+const generatePassword = require('../../util/generatePassword.js');
+const db = require('../../database.js');
 
 exports.description = "Drop a premium key.";
 
@@ -79,7 +80,7 @@ exports.run = async (client, message, args) => {
 
     await message.delete();
 
-    let code;
+    let codeStr;
 
     const moment = Date.now();
     const epochInSeconds = Math.floor(Date.now() / 1000) + (time / 1000);
@@ -92,22 +93,17 @@ exports.run = async (client, message, args) => {
     }
 
     if (!args[2]) {
-        const random = generatePassword();
-
-        code = await codes.set(random, {
-            code: random,
-            createdBy: message.author.id,
-            balance: 1,
-            createdAt: moment + time,
-        });
+        codeStr = generatePassword();
     } else {
-        code = await codes.set(args[2], {
-            code: args[2],
-            createdBy: message.author.id,
-            balance: 1,
-            createdAt: moment + time,
-        });
+        codeStr = args[2];
     }
+
+    await db.setCode(codeStr, {
+        code: codeStr,
+        createdBy: message.author.id,
+        balance: 1,
+        createdAt: moment + time,
+    });
 
     const Embed = new Discord.EmbedBuilder()
         .setAuthor({ name: "Premium Key Drop!", iconURL: client.user.avatarURL() })
@@ -122,7 +118,7 @@ exports.run = async (client, message, args) => {
 
     const msg = await message.channel.send({ embeds: [Embed] });
 
-    await codes.set(code.code + ".drop", {
+    await db.setCodeDrop(codeStr, {
         message: {
             ID: msg.id,
             channel: msg.channel.id,
@@ -133,7 +129,7 @@ exports.run = async (client, message, args) => {
         await msg.edit(
             {
                 embeds: [Embed.setDescription(
-                    `**REDEEM NOW!**\nThe code is: \`${code.code}\` \n**Steps:** \n- Navigate to <#${MiscConfigs.normalCommands}>\n- Redeem the Premium Code: \`${Config.DiscordBot.Prefix}server redeem <CODE>\`\n\n*No one has redeemed the code yet!*`,
+                    `**REDEEM NOW!**\nThe code is: \`${codeStr}\` \n**Steps:** \n- Navigate to <#${MiscConfigs.normalCommands}>\n- Redeem the Premium Code: \`${Config.DiscordBot.Prefix}server redeem <CODE>\`\n\n*No one has redeemed the code yet!*`,
                 )]
             }
         ).catch(async (Error) => {});

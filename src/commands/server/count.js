@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 
 const Config = require('../../../config.json');
 const getUserServers = require('../../util/getUserServers.js');
+const db = require('../../database.js');
 
 exports.description = "Shows the amount of servers a user has.";
 
@@ -19,7 +20,7 @@ exports.run = async (client, message, args) => {
         ? args[1].match(/[0-9]{17,19}/)[0]
         : message.author.id;
 
-    const userAccount = await userData.get(UserId);
+    const userAccount = await db.getUserData(UserId);
 
     if (userAccount == null) return message.channel.send('User does not have account linked.');
 

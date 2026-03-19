@@ -1,6 +1,7 @@
 const Discord = require("discord.js");
 const Config = require('../../../config.json');
 const MiscConfigs = require('../../../config/misc-configs.js');
+const db = require('../../database.js');
 
 exports.description = "Add Premium servers to a user.";
 
@@ -22,12 +23,8 @@ exports.run = async (client, message, args) => {
     let parser = new Intl.NumberFormat();
 
     let setDonations = async (userid, amount) => {
-
-        if (await userPrem.get(userid + ".used") == null) {
-            await userPrem.set(userid + ".used", 0);
-        }
-
-        await userPrem.set(userid + ".donated", amount);
+        await db.ensureUserPrem(userid);
+        await db.setUserPremField(userid, 'donated', amount);
     };
 
     let sendMessage = async (userid, amount) => {
@@ -49,7 +46,7 @@ exports.run = async (client, message, args) => {
     let amount = Number.parseInt(args[3]);
     if (isNaN(amount)) return;
 
-    let userPremium = await userPrem.get(userid);
+    let userPremium = await db.getUserPrem(userid);
     let oldBal = userPremium ? userPremium.donated || 0 : 0;
 
     if (args[1].toLowerCase() === "add") {

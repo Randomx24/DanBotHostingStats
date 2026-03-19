@@ -3,6 +3,7 @@ const humanizeDuration = require("humanize-duration");
 
 const Config = require('../../../config.json');
 const MiscConfigs = require('../../../config/misc-configs.js');
+const db = require('../../database.js');
 
 /**
  * 
@@ -12,21 +13,16 @@ const MiscConfigs = require('../../../config/misc-configs.js');
  * @returns void
  */
 exports.run = async (client, message, args) => {
-    let setDonations = async (userid, amount) => {
-        await userPrem.set(userid + ".used", await userPrem.get(userid + ".used") || 0);
-        await userPrem.set(userid + ".donated", amount);
-    };
-
     if (!args[1]) {
         message.reply("Usage is: `" + Config.DiscordBot.Prefix + "server redeem code`");
     } else {
-        let code = await codes.get(args[1]);
+        let code = await db.getCode(args[1]);
 
         if (code == null) {
             message.reply("That code is invalid or expired");
             return;
         }
-        let oldBal = await userPrem.get(message.author.id + ".donated") || 0;
+        let oldBal = await db.getUserPremField(message.author.id, 'donated') || 0;
 
         let now = Date.now();
         message.reply(
@@ -48,11 +44,12 @@ exports.run = async (client, message, args) => {
                     "*",
             );
 
-        await codes.delete(args[1]);
+        await db.deleteCode(args[1]);
 
         message.member.roles.add(Config.DiscordBot.Roles.Donator);
 
-        await setDonations(message.author.id, oldBal + code.balance);
+        await db.ensureUserPrem(message.author.id);
+        await db.setUserPremField(message.author.id, 'donated', oldBal + code.balance);
 
         if (code.drop != null) {
             const msg = await client.channels.cache.get(code.drop.message.channel).messages.fetch(code.drop.message.ID).catch((Error) => {});

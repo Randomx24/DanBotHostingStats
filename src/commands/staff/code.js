@@ -4,6 +4,7 @@ const Config = require('../../../config.json');
 const MiscConfigs = require('../../../config/misc-configs.js');
 
 const generatePassword = require('../../util/generatePassword.js');
+const db = require('../../database.js');
 
 exports.description = "Create a code for premium servers.";
 
@@ -37,7 +38,7 @@ exports.run = async (client, message, args) => {
 
     const code = args[1].toLowerCase() == "random" ? generatePassword() : args[1];
 
-    if (await codes.get(code) != null) {
+    if (await db.getCode(code) != null) {
         message.reply("A code with that name already exists.");
         return;
     }
@@ -52,7 +53,7 @@ exports.run = async (client, message, args) => {
             "`",
     );
 
-    await codes.set(code, {
+    await db.setCode(code, {
         code: code,
         createdBy: message.author.id,
         balance: balance,

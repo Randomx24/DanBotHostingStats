@@ -1,6 +1,7 @@
 const Discord = require('discord.js');
 const Axios = require('axios');
 const Config = require('../../../config.json');
+const db = require('../../database.js');
 
 exports.description = "Delete multiple servers. View this command for usage.";
 
@@ -14,7 +15,7 @@ exports.description = "Delete multiple servers. View this command for usage.";
 exports.run = async (client, message, args) => {
 
     // Fetch user's servers from Pterodactyl API.
-    const user = await userData.get(message.author.id);
+    const user = await db.getUserData(message.author.id);
 
     if (user == null) return message.channel.send('User does not have account linked.');
 
@@ -120,7 +121,7 @@ exports.run = async (client, message, args) => {
         
                         // Adjust user usage if it's a Donator Node.
                         if (Config.DonatorNodes.find(x => x === server.attributes.node)) {
-                            await userPrem.sub(`${message.author.id}.used`, 1);
+                            await db.decrementUserPremUsed(message.author.id, 1);
                         }
 
                         serverCounter++;

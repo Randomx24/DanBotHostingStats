@@ -3,6 +3,7 @@ const Axios = require('axios');
 
 const Config = require('../../../config.json');
 const getUser = require('../../util/getUser.js');
+const db = require('../../database.js');
 
 exports.description = "Sync your Discord account with your panel account (updates email and username).";
 
@@ -15,7 +16,7 @@ exports.description = "Sync your Discord account with your panel account (update
  */
 exports.run = async (client, message, args) => {
     // Check if user has a linked account
-    const userAccount = await userData.get(message.author.id);
+    const userAccount = await db.getUserData(message.author.id);
     
     if (!userAccount) {
         return message.reply(
@@ -51,13 +52,13 @@ exports.run = async (client, message, args) => {
 
         // Check if email has changed:
         if (panelUser.email !== userAccount.email) {
-            await userData.set(`${message.author.id}.email`, panelUser.email);
+            await db.updateUserDataField(message.author.id, 'email', panelUser.email);
             changes.push(`Email updated.`);
         }
 
         // Check if username has changed
         if (panelUser.username !== userAccount.username) {
-            await userData.set(`${message.author.id}.username`, panelUser.username);
+            await db.updateUserDataField(message.author.id, 'username', panelUser.username);
             changes.push(`Username updated.`);
         }
 

@@ -6,6 +6,7 @@ const MiscConfigs = require('../../../config/misc-configs.js');
 const getUser = require("../../util/getUser.js");
 const generateCode = require("../../util/generateCode.js");
 const sendEmail = require("../../util/sendEmail.js");
+const db = require('../../database.js');
 
 exports.description = "Link your console account to your Discord account.";
 
@@ -18,17 +19,16 @@ exports.description = "Link your console account to your Discord account.";
 exports.run = async (client, message, args) => {
 
     // The user does not have a panel account linked and would like to link one.
-    if (await userData.get(message.author.id) != null) {
-
-        const user = await userData.get(message.author.id);
+    const user = await db.getUserData(message.author.id);
+    if (user != null) {
 
         const AlreadyLinkedEmbed = new Discord.EmbedBuilder()
         .setColor(`Green`)
         .addFields(
-            { name: `**__Username__**`, value: await userData.get(message.author.id + ".username") },
-            { name: `**__Linked Date (YYYY-MM-DD)__**`, value: user.linkDate },
-            { name: `**__Linked Time__**`, value: user.linkTime },
-            { name: `**__Relative Time__**`, value: "<t:" + Math.round(user.epochTime) + ":f> (" + "<t:" + Math.round(user.epochTime) + ":R>)" },
+            { name: `**__Username__**`, value: user.username || '' },
+            { name: `**__Linked Date (YYYY-MM-DD)__**`, value: user.link_date ?? '' },
+            { name: `**__Linked Time__**`, value: user.link_time ?? '' },
+            { name: `**__Relative Time__**`, value: "<t:" + Math.round(user.epoch_time ?? 0) + ":f> (" + "<t:" + Math.round(user.epoch_time ?? 0) + ":R>)" },
         )
         .setTimestamp()
         .setFooter({text: client.user.username, iconUrl: client.user.avatarURL()});
@@ -249,8 +249,7 @@ exports.run = async (client, message, args) => {
                         const timestamp = `${moment().format("HH:mm:ss")}`;
                         const datestamp = `${moment().format("DD-MM-YYYY")}`;
 
-                        await userData.set(`${message.author.id}`, {
-                            discordID: message.author.id,
+                        await db.setUserData(message.author.id, {
                             consoleID: User.attributes.id,
                             email: User.attributes.email,
                             username: User.attributes.username,

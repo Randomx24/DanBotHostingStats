@@ -3,6 +3,7 @@ const Config = require('../../../config.json');
 
 const PremiumCreation = require("../../../createData_Prem");
 const MiscConfigs = require("../../../config/misc-configs.js");
+const db = require('../../database.js');
 
 exports.description = "Creates a donator server. View this command for usage.";
 
@@ -16,25 +17,18 @@ exports.description = "Creates a donator server. View this command for usage.";
 exports.run = async (client, message, args) => {
     //return message.channel.send("Server creation is disabled. Do not ping staff.");
 
-    const UserPremium = await userPrem.get(message.author.id);
-
-    if (UserPremium == null || (UserPremium.donated == NaN)) {
-        await userPrem.set(`${message.author.id}.donated`, 0);
-        await userPrem.set(`${message.author.id}.used`, 0);
-
-        return await message.reply("Retry the command.");
-    };
+    await db.ensureUserPrem(message.author.id);
+    let UserPremium = await db.getUserPrem(message.author.id);
 
     if(UserPremium.used < 0) {
-        await userPrem.set(`${message.author.id}.used`, 0); 
-
-        return await message.reply("Retry the command.");
+        await db.setUserPremField(message.author.id, 'used', 0);
+        UserPremium = await db.getUserPrem(message.author.id);
     };
 
     // Removes all the other arguments, and joins the strings, then limits it to 150 characters.
     const ServerName = message.content.split(" ").slice(3).join(" ").slice(0, 150) + (message.content.split(" ").slice(3).join(" ").length > 150 ? "..." : "") || "Untitled Server (settings -> server name)";
 
-    const userAccount = await userData.get(message.author.id);
+    const userAccount = await db.getUserData(message.author.id);
 
     if (userAccount == null) {
         return message.reply(
@@ -109,9 +103,9 @@ exports.run = async (client, message, args) => {
     PremiumCreation.createServer(ServerCreationSettings)
         .then(async (Response) => {
 
-            await userPrem.add(`${message.author.id}.used`, 1);
+            await db.incrementUserPremUsed(message.author.id, 1);
 
-            const UserPremiumNew = await userPrem.get(message.author.id);
+            const UserPremiumNew = await db.getUserPrem(message.author.id);
 
             const Embed = new Discord.EmbedBuilder()
                 .setColor(`Green`)
@@ -122,7 +116,7 @@ exports.run = async (client, message, args) => {
                     { name: "__**User ID:**__", value: userAccount.consoleID.toString(), inline: true },
                     { name: "__**Type:**__", value: ServerType.toString(), inline: true },
                     { name: "__**Server Name:**__", value: ServerName.toString(), inline: false },
-                    { name: "__**Slots Used:**__", value: `(` + UserPremiumNew.used + ` slots / ` + (UserPremium.donated / Config.PremiumServerPrice) + ` slots)`, inline: false }
+                    { name: "__**Slots Used:**__", value: `(` + UserPremiumNew.used + ` slots / ` + (UserPremiumNew.donated / Config.PremiumServerPrice) + ` slots)`, inline: false }
                 )
                 .setTimestamp()
                 .setFooter({ text: "Command Executed By: " + message.author.username + ` (${message.author.id})`, iconURL: message.author.avatarURL() });
@@ -142,7 +136,7 @@ exports.run = async (client, message, args) => {
                 )
                 .setTimestamp()
                 .setFooter(
-                    { text: "User has " + (UserPremiumNew.used) + " out of a max " + (UserPremium.donated / Config.PremiumServerPrice) + " servers", iconURL: client.user.displayAvatarURL() }
+                    { text: "User has " + (UserPremiumNew.used) + " out of a max " + (UserPremiumNew.donated / Config.PremiumServerPrice) + " servers", iconURL: client.user.displayAvatarURL() }
                 );
 
             await client.channels.cache.get(MiscConfigs.donatorlogs).send({embeds: [CreationLog]});

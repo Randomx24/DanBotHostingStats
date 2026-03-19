@@ -2,6 +2,7 @@ const Discord = require("discord.js");
 const Axios = require("axios");
 
 const Config = require('../../../config.json');
+const db = require('../../database.js');
 
 exports.description = "Fixes a user's premium count.";
 
@@ -27,7 +28,7 @@ exports.run = async (client, message, args) => {
             );
             selectedUser = await selectedUser;
 
-            const userAccount = await userData.get(selectedUser.id);
+            const userAccount = await db.getUserData(selectedUser.id);
 
             if (userAccount == null || userAccount.consoleID == null) {
                 if (selectedUser.id === message.author.id) {
@@ -64,14 +65,14 @@ exports.run = async (client, message, args) => {
                     ++actualPremiumServersUsed;
             }
 
-            const userPremData = await userPrem.get(selectedUser.id);
+            const userPremData = await db.getUserPrem(selectedUser.id);
 
-            const storedPremiumServersUsed = userPremData.used;
+            const storedPremiumServersUsed = userPremData ? userPremData.used : 0;
 
             if (actualPremiumServersUsed != storedPremiumServersUsed) {
-                await userPrem.set(selectedUser.id, {
+                await db.setUserPrem(selectedUser.id, {
                     used: actualPremiumServersUsed,
-                    donated: userPremData.donated,
+                    donated: userPremData ? userPremData.donated : 0,
                 });
                 replyMsg.edit("That user's premium server count has been fixed!");
             } else {

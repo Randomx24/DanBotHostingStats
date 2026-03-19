@@ -2,6 +2,7 @@ const Axios = require("axios");
 const Discord = require("discord.js");
 
 const Config = require('../../../config.json');
+const db = require('../../database.js');
 
 exports.description = "Shows the servers a user has.";
 
@@ -20,7 +21,7 @@ exports.run = async (client, message, args) => {
     if (message.member.roles.cache.find((r) => r.id === Config.DiscordBot.Roles.BotAdmin))
         userID = args[1] || message.author.id;
 
-    const userAccount = await userData.get(userID);
+    const userAccount = await db.getUserData(userID);
 
     if (userAccount == null || userAccount.consoleID == null) {
         if (userID === message.author.id) {

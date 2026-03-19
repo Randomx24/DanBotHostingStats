@@ -1,27 +1,25 @@
 const Discord = require("discord.js");
 
 const Config = require("../../config.json");
+const db = require("../database.js");
 
 /**
- * 
- * @param {Discord.Client} client 
- * @param {Discord.GuildMember} member 
- * @param {Discord.Guild} guild 
- * @returns 
+ *
+ * @param {Discord.Client} client
+ * @param {Discord.GuildMember} member
+ * @param {Discord.Guild} guild
+ * @returns
  */
 module.exports = async (client, member, guild) => {
 
     // If the user is a bot, returns.
     if (member.user.bot) return;
 
-    const userAccount = await userData.get(member.id);
-    const userPremium = await userPrem.get(member.id);
+    const userAccount = await db.getUserData(member.id);
 
-    // If user didn't have a object in user premium, creates one.
-    if (userPremium == null) {
-        await userPrem.set(`${member.id}.used`, 0);
-        await userPrem.set(`${member.id}.donated`, 0);
-    }
+    // Ensure a userPrem row exists with defaults.
+    await db.ensureUserPrem(member.id);
+    const userPremium = await db.getUserPrem(member.id);
 
     //If the user has a console account linked, give them the client role.
     if (userAccount !== null) {

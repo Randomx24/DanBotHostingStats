@@ -3,6 +3,7 @@ const Config = require('../../../config.json');
 const MiscConfigs = require("../../../config/misc-configs.js");
 const PrivatePanelConfigs = require("../../../config/private-panel-configs.js");
 const PrivateCreation = require("../../../createData_Private.js");
+const db = require('../../database.js');
 
 exports.description = "Create a server on the private node. Only authorized users can use this command.";
 
@@ -22,7 +23,7 @@ exports.run = async (client, message, args) => {
     // Removes all the other arguments, and joins the strings, then limits it to 150 characters.
     const ServerName = message.content.split(" ").slice(3).join(" ").slice(0, 150) + (message.content.split(" ").slice(3).join(" ").length > 150 ? "..." : "") || "Untitled Server (settings -> server name)";
 
-    const userAccount = await userData.get(message.author.id);
+    const userAccount = await db.getUserData(message.author.id);
 
     if (userAccount == null) {
         return message.reply(

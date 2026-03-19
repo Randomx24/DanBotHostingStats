@@ -8,6 +8,7 @@ const MiscConfigs = require('../../../config/misc-configs.js');
 const generatePassword = require('../../util/generatePassword.js');
 const generateCode = require('../../util/generateCode.js');
 const sendMail = require('../../util/sendEmail.js');
+const db = require('../../database.js');
 
 exports.description = "Create a new panel account.";
 
@@ -21,7 +22,7 @@ exports.description = "Create a new panel account.";
 exports.run = async (client, message, args) => {
     //return message.reply("User account creation is now disabled via the bot. Do not create a ticket. See this announcement: https://discord.com/channels/639477525927690240/898050443446464532/1376647936884080742");
 
-    const userAccount = await userData.get(message.author.id);
+    const userAccount = await db.getUserData(message.author.id);
     
     if (userAccount != null) {
         message.reply("You already have a `panel account` linked to your discord account.");
@@ -231,14 +232,14 @@ exports.run = async (client, message, args) => {
         data: data,
     })
         .then(async (user) => {
-            await userData.set(`${message.author.id}`, {
-                discordID: message.author.id,
+            await db.setUserData(message.author.id, {
                 consoleID: user.data.attributes.id,
                 email: user.data.attributes.email,
                 username: user.data.attributes.username,
                 linkTime: moment().format("HH:mm:ss"),
                 linkDate: moment().format("YYYY-MM-DD"),
                 domains: [],
+                epochTime: Date.now() / 1000,
             });
 
             msg.edit({

@@ -4,6 +4,7 @@ const Axios = require("axios");
 const deleteServer = require('../../util/deleteServer.js');
 
 const Config = require('../../../config.json');
+const db = require('../../database.js');
 
 exports.description = "Delete your panel account and your account data on the bot.";
 
@@ -17,7 +18,7 @@ exports.description = "Delete your panel account and your account data on the bo
 exports.run = async (client, message, args) => {
 
     // Check if the user has a linked panel account
-    const UserAccount = await userData.get(message.author.id);
+    const UserAccount = await db.getUserData(message.author.id);
 
     if (!UserAccount) {
         message.reply("You don't have a linked `panel account` to delete.");
@@ -116,7 +117,7 @@ exports.run = async (client, message, args) => {
                 });
 
                 // Delete the user's premium if they have one.
-                await userData.delete(message.author.id);
+                await db.deleteUserData(message.author.id);
 
                 // Use MessageReply.edit instead of Interaction.followUp
                 await MessageReply.edit({ 

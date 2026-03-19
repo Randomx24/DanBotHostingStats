@@ -1,5 +1,6 @@
 const Discord = require("discord.js");
 const MiscConfigs = require('../../../config/misc-configs.js');
+const db = require('../../database.js');
 
 exports.description = "Delete a premium key.";
 
@@ -24,18 +25,18 @@ exports.run = async (client, message, args) => {
     try {
         // If the user wants to delete all the codes.
         if(codeToDelete == "all"){
-            await codes.deleteAll().catch(() => {});
-    
+            await db.deleteAllCodes().catch(() => {});
+
             await message.reply("Successfully deleted all codes.");
         } else {
-            const codeExists = await codes.get(codeToDelete);
-        
+            const codeExists = await db.getCode(codeToDelete);
+
             if (!codeExists) {
                 await message.reply("This code does not exist.");
                 return;
             }
-    
-            await codes.delete(codeToDelete).catch(() => {});
+
+            await db.deleteCode(codeToDelete).catch(() => {});
     
             await message.reply(`Successfully deleted the code: \`${codeToDelete}\``);
         }

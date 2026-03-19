@@ -1,4 +1,5 @@
 const Discord = require("discord.js");
+const db = require("../../database.js");
 
 exports.description = "Unlinks your account from a panel account.";
 
@@ -11,6 +12,6 @@ exports.description = "Unlinks your account from a panel account.";
  * @returns void
  */
 exports.run = async (client, message, args) => {
-    await userData.delete(message.author.id);
+    await db.deleteUserData(message.author.id);
     message.reply("You have unlinked this account!");
 };

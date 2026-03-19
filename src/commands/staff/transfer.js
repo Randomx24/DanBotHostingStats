@@ -2,6 +2,7 @@ const Discord = require("discord.js");
 
 const Config = require('../../../config.json');
 const MiscConfigs = require('../../../config/misc-configs.js');
+const db = require('../../database.js');
 
 exports.description = "Transfers user account and balance to a new account.";
 
@@ -24,7 +25,7 @@ exports.run = async (client, message, args) => {
     if (args.length < 3) {
         message.reply("usage: " + Config.DiscordBot.Prefix + "staff transfer <OLDUSERID> <NEWUSERID>.");
     } else {
-        let old = await userData.get(args[1]);
+        let old = await db.getUserData(args[1]);
 
         if (old == null) {
             message.reply("That account is not linked with a console account :sad:");
@@ -34,30 +35,33 @@ exports.run = async (client, message, args) => {
                 return;
             }
 
-            let newData = await userData.get(args[2]);
+            let newData = await db.getUserData(args[2]);
 
-            if (!newData || old.consoleID != newData.consoleID) {
+            const oldConsoleId = old.console_id ?? old.consoleID;
+            const newConsoleId = newData ? (newData.console_id ?? newData.consoleID) : null;
+
+            if (!newData || oldConsoleId != newConsoleId) {
                 message.reply(
                     "Both accounts should be linked to the same panel account in order for this command to work.",
                 );
                 return;
             }
 
-            let { donated, used } = await userPrem.get(args[1]) || {
+            let { donated, used } = await db.getUserPrem(args[1]) || {
                 donated: 0,
                 used: 0,
             };
-            let newM = await userPrem.get(args[2]) || {
+            let newM = await db.getUserPrem(args[2]) || {
                 donated: 0,
                 used: 0,
             };
 
-            await userPrem.set(args[2], {
+            await db.setUserPrem(args[2], {
                 used: used + newM.used,
-                donated: donated + newM.used,
+                donated: donated + newM.donated,
             });
 
-            await userPrem.delete(args[1]);
+            await db.deleteUserPrem(args[1]);
 
             message.reply("Done!");
 

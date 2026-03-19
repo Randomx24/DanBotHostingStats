@@ -1,5 +1,6 @@
 const Discord = require("discord.js");
 const Config = require('../../../config.json');
+const db = require('../../database.js');
 
 exports.description = "Put a Node in maintenance.";
 
@@ -18,32 +19,24 @@ exports.run = async (client, message, args) => {
     if (!args[1]) {
         return await message.reply("Please provide a Node to put into maintenance!");
     } else {
-        const Data = await nodeStatus.get(args[1].toLowerCase());
+        const Data = await db.getNodeStatus(args[1].toLowerCase());
 
         if (Data == null) {
             return await message.reply("Invalid Node provided. Please provide a valid Node DB name.");
         } else {
-            if (Data.maintenance) {
-                const Result = await nodeStatus.set(`${args[1]}.maintenance`, false);
-
-                if (!Result)
-                    return message.reply(`Unable to put ${args[1]} out of maintenance mode.`);
-
-                await message.reply(`Successfully put ${args[1]} out of maintenance mode.`);
-            } else if (Data.maintenance == false) {
-                const Result = await nodeStatus.set(`${args[1]}.maintenance`, true);
-
-                if (!Result)
-                    return message.reply(`Unable to put ${args[1]} into maintenance mode.`);
-
-                await message.reply(`Successfully put ${args[1]} into maintenance mode.`);
-            } else if (Data.maintenance == null) {
-                const Result = await nodeStatus.set(`${args[1]}.maintenance`, false);
-
-                if (!Result)
-                    return message.reply(`Unable to put ${args[1]} out of maintenance mode (FIRST).`);
-
-                await message.reply(`Successfully put ${args[1]} into maintenance mode (FIRST).`);
+            try {
+                if (Data.maintenance) {
+                    await db.setNodeStatusFields(args[1], { maintenance: false });
+                    await message.reply(`Successfully put ${args[1]} out of maintenance mode.`);
+                } else if (Data.maintenance == false) {
+                    await db.setNodeStatusFields(args[1], { maintenance: true });
+                    await message.reply(`Successfully put ${args[1]} into maintenance mode.`);
+                } else if (Data.maintenance == null) {
+                    await db.setNodeStatusFields(args[1], { maintenance: false });
+                    await message.reply(`Successfully put ${args[1]} into maintenance mode (FIRST).`);
+                }
+            } catch (err) {
+                await message.reply(`Unable to update maintenance mode for ${args[1]}.`);
             }
         }
     }
