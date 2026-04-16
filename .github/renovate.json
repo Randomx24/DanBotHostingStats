@@ -1,13 +1,19 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":enableVulnerabilityAlerts",
+    ":dependencyDashboard"
+  ],
+  "labels": ["dependencies"],
+  "minimumReleaseAge": "7 days",
+  "minimumReleaseAgeBehaviour": "timestamp-required",
   "rangeStrategy": "bump",
   "separateMajorMinor": true,
   "separateMinorPatch": false,
   "packageRules": [
     {
-      "matchPackageNames": [
-        "chalk"
-      ],
+      "matchPackageNames": ["chalk"],
       "enabled": false
     },
     {
