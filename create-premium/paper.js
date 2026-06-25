@@ -11,7 +11,7 @@ function createServer(ServerName, UserID){
         user: UserID,
         nest: 1,
         egg: 3,
-        docker_image: "ghcr.io/ptero-eggs/yolks:java_22",
+        docker_image: "ghcr.io/pterodactyl/yolks:java_25",
         startup:
             "java -Xms128M -Xmx{{SERVER_MEMORY}}M -Dterminal.jline=false -Dterminal.ansi=true -jar {{SERVER_JARFILE}}",
         limits: {
